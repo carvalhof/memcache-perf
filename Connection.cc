@@ -63,7 +63,7 @@ Connection::Connection(struct event_base* _base, struct evdns_base* _evdns,
   memset(&client_addr, 0, sizeof(client_addr));
   client_addr.sin_family = AF_INET;
   client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  client_addr.sin_port = htons(source_port_per_thread++);
+  client_addr.sin_port = htons(source_port++);
   if (bind(sock, (struct sockaddr*)&client_addr, sizeof(client_addr)) < 0) {
     perror("ERROR: bind");
     exit(-1);
