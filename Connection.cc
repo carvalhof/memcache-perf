@@ -65,8 +65,12 @@ Connection::Connection(struct event_base* _base, struct evdns_base* _evdns,
   client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   client_addr.sin_port = htons(source_port++);
   int reuse = 1;
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
-    perror("ERROR: setsockopt(): SO_REUSEADDR | SO_REUSEPORT");
+  if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
+    perror("ERROR: setsockopt(): SO_REUSEPORT");
+    exit(-1);
+  }
+  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+    perror("ERROR: setsockopt(): SO_REUSEADDR");
     exit(-1);
   }
   if (bind(sock, (struct sockaddr*)&client_addr, sizeof(client_addr)) < 0) {
