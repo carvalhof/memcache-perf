@@ -21,7 +21,7 @@
 #define MAX_KEY_LEN 48
 #define MAX_MGET_KEYS 512
 
-int source_port=6000;
+static int demikernel_idx=0;
 int ConnectionStats::details[]={5,10,50,67,75,80,85,90,95,99,999,9999};
 int ConnectionStats::ndetails=sizeof(ConnectionStats::details)/sizeof(int);
 
@@ -54,37 +54,38 @@ Connection::Connection(struct event_base* _base, struct evdns_base* _evdns,
 
   last_tx = last_rx = 0.0;
 
-  int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {
-      perror("ERROR: socket");
-      exit(-1);
-  }
-  struct sockaddr_in client_addr;
-  memset(&client_addr, 0, sizeof(client_addr));
-  client_addr.sin_family = AF_INET;
-  client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  client_addr.sin_port = htons(source_port++);
-  int reuse = 1;
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
-    perror("ERROR: setsockopt(): SO_REUSEPORT");
-    exit(-1);
-  }
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-    perror("ERROR: setsockopt(): SO_REUSEADDR");
-    exit(-1);
-  }
-  if (bind(sock, (struct sockaddr*)&client_addr, sizeof(client_addr)) < 0) {
-    perror("ERROR: bind");
-    exit(-1);
-  }
+  // int sock = socket(AF_INET, SOCK_STREAM, 0);
+  // if (sock < 0) {
+  //     perror("ERROR: socket");
+  //     exit(-1);
+  // }
+  // struct sockaddr_in client_addr;
+  // memset(&client_addr, 0, sizeof(client_addr));
+  // client_addr.sin_family = AF_INET;
+  // client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  // client_addr.sin_port = htons(source_port++);
+  // int reuse = 1;
+  // if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
+  //   perror("ERROR: setsockopt(): SO_REUSEPORT");
+  //   exit(-1);
+  // }
+  // if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+  //   perror("ERROR: setsockopt(): SO_REUSEADDR");
+  //   exit(-1);
+  // }
+  // if (bind(sock, (struct sockaddr*)&client_addr, sizeof(client_addr)) < 0) {
+  //   perror("ERROR: bind");
+  //   exit(-1);
+  // }
 
-  bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE);
+  // bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE);
+  bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
   bufferevent_setcb(bev, bev_read_cb, bev_write_cb, bev_event_cb, this);
   bufferevent_enable(bev, EV_READ | EV_WRITE);
 
   if (bufferevent_socket_connect_hostname(bev, evdns, AF_UNSPEC,
                                           hostname.c_str(),
-                                          atoi(port.c_str())))
+                                          atoi(port.c_str())+demikernel_idx++))
     DIE("bufferevent_socket_connect_hostname()");
 
   timer = evtimer_new(base, timer_cb, this);
